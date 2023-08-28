@@ -17,10 +17,12 @@ export class TasksRepository extends Repository<Task> {
     return task;
   }
 
-  async getTasks(filterDTO?: GetTasksFilterDTO): Promise<Task[]> {
+  async getTasks(filterDTO: GetTasksFilterDTO, user: User): Promise<Task[]> {
     const { status, search } = filterDTO;
 
     const query = this.createQueryBuilder('task'); // task entity
+
+    query.where({ user }); // fetch only tasks belonging to user
 
     if (status) {
       query.andWhere('task.status = :status', { status });
@@ -28,7 +30,7 @@ export class TasksRepository extends Repository<Task> {
 
     if (search) {
       query.andWhere(
-        'LOWER(task.title) like LOWER(:search) OR LOWER(task.description) like LOWER(:search)',
+        '(LOWER(task.title) like LOWER(:search) OR LOWER(task.description) like LOWER(:search))', // wrap in () to fix condition issues
         { search: `%${search}%` },
       );
     }
